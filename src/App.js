@@ -1,7 +1,43 @@
+import React, { useState } from "react";
 import "./App.css";
 
 function App() {
   let bars = [];
+  const [elapsedTime, setElapsedTime] = useState(0);
+
+  let audioCtx = null;
+
+  const checker = async () => {
+    for (let i = 0; i < bars.length - 1; i++) {
+      if (parseInt(bars[i].style.height) <= parseInt(bars[i + 1].style.height)) {
+        bars[i].style.backgroundColor = "green";
+        updateBarHolder(bars);
+        playNote(300 + parseInt(bars[i].style.height));
+        await sleep(100);
+      }
+    }
+
+    bars[bars.length - 1].style.backgroundColor = "green";
+    updateBarHolder(bars);
+    playNote(300 + parseInt(bars[bars.length - 1].style.height));
+  }
+
+  const initAudioContext = () => {
+    if (audioCtx == null) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  };
+
+  const playNote = (freq) => {
+    if (!audioCtx) initAudioContext();
+
+    const dur = 0.1;
+    const osc = audioCtx.createOscillator();
+    osc.frequency.value = freq;
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+    osc.connect(audioCtx.destination);
+  };
 
   function getRandomInt(max) {
     return Math.floor(Math.random() * max);
@@ -21,85 +57,66 @@ function App() {
 
   const random = () => {
     bars = [];
-
-    console.log("random");
-
-    // for (let i = 0; i < 10; i++) {
-    //   heights[i] = getRandomInt(i);
-    // }
-
     const barHolder = document.getElementById("barHolder");
-
     barHolder.innerHTML = "";
-    
-    // console.log(barHolder.childNodes);
+
     for (let i = 1; i < 11; i++) {
       const bar = document.createElement("div");
       bar.id = `bar_${i}`;
       bar.classList.add("1");
       barHolder.appendChild(bar);
-      bar.style.width = 50 + "px";
+      bar.style.width = "50px";
       bar.style.height = getRandomInt(100) + "px";
       bar.style.backgroundColor = "black";
       bar.style.display = "inline-block";
-      bar.style.margin = 2 + "px";
+      bar.style.margin = "2px";
       bars.push(bar);
     }
-
-    console.log(bars);
-
-    console.log(bars[0]);
   };
 
   const partition = async (arr, low, high) => {
     let pivot = arr[high];
-    console.log(pivot);
     let i = low - 1;
 
     for (let j = low; j <= high - 1; j++) {
-      // If current element is smaller than the pivot
       if (parseInt(arr[j].style.height) < parseInt(pivot.style.height)) {
-        // Increment index of smaller element
         i++;
-        // Swap elements
         [arr[i], arr[j]] = [arr[j], arr[i]];
         arr[i].style.backgroundColor = "red";
         arr[j].style.backgroundColor = "red";
         updateBarHolder(arr);
+        playNote(300 + parseInt(arr[i].style.height)); // Play note for the height
         await sleep(200);
         arr[i].style.backgroundColor = "black";
         arr[j].style.backgroundColor = "black";
       }
     }
-    // Swap pivot to its correct position
     [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
     arr[i + 1].style.backgroundColor = "red";
     arr[high].style.backgroundColor = "red";
     updateBarHolder(arr);
+    playNote(300 + parseInt(arr[i + 1].style.height)); // Play note for the height
     await sleep(200);
     arr[i + 1].style.backgroundColor = "black";
     arr[high].style.backgroundColor = "black";
-    return i + 1; // Return the partition index
+    return i + 1;
   };
 
   const quickSort = async (arr, low, high) => {
-    if (low >= high) return;
-    let pi = await partition(arr, low, high);
-
-    await quickSort(arr, low, pi - 1);
-    await quickSort(arr, pi + 1, high);
+    if (low < high) {
+      let pi = await partition(arr, low, high);
+      await quickSort(arr, low, pi - 1);
+      await quickSort(arr, pi + 1, high);
+    }
   };
 
-  const handleQS = () => {
-    quickSort(bars, 0, bars.length - 1);
+  const handleQS = async () => {
+    const start = performance.now();
+    await quickSort(bars, 0, bars.length - 1);
+    const end = performance.now();
+    setElapsedTime((end - start) / 1000);
 
-    console.log(bars);
-  };
-
-  const handleInsertion = () => {
-    insertionSort(bars, bars.length);
-
-    console.log(bars);
+    await checker();
   };
 
   const insertionSort = async (arr, n) => {
@@ -108,32 +125,45 @@ function App() {
       key = arr[i];
       j = i - 1;
 
-      /* Move elements of arr[0..i-1], that are  
-        greater than key, to one position ahead  
-        of their current position */
       while (j >= 0 && parseInt(arr[j].style.height) > parseInt(key.style.height)) {
         arr[j + 1] = arr[j];
         arr[j + 1].style.backgroundColor = "red";
         updateBarHolder(arr);
-        await sleep(200);
+        playNote(300 + parseInt(arr[j + 1].style.height)); // Play note for the height
+        await sleep(100);
         arr[j + 1].style.backgroundColor = "black";
         j = j - 1;
       }
       arr[j + 1] = key;
       arr[j + 1].style.backgroundColor = "red";
       updateBarHolder(arr);
-      await sleep(200);
+      playNote(300 + parseInt(arr[j + 1].style.height)); // Play note for the height
+      await sleep(100);
       arr[j + 1].style.backgroundColor = "black";
     }
+  };
+
+  const handleInsertion = async () => {
+    const start = performance.now();
+    await insertionSort(bars, bars.length);
+    const end = performance.now();
+    setElapsedTime((end - start) / 1000);
+
+    await checker();
   };
 
   return (
     <div className="App">
       <header className="App-header">
+        <h1>Data Sort Visualizer</h1>
         <div id="barHolder" className="barHolder"></div>
         <button onClick={random}>Generate Random Array</button>
         <button onClick={handleQS}>QuickSort</button>
         <button onClick={handleInsertion}>Insertion Sort</button>
+        <div className="timer">
+          <h1>Time Executed</h1>
+          <h2 className="time">{elapsedTime.toFixed(2)} seconds</h2>
+        </div>
       </header>
     </div>
   );
