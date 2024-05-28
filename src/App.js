@@ -5,22 +5,39 @@ function App() {
   let bars = [];
   const [elapsedTime, setElapsedTime] = useState(0);
 
+  const delay = 100;
+
+  const frequency = 300;
+
   let audioCtx = null;
 
   const checker = async () => {
+    if (bars.length === 0) {
+      return;
+    }
+  
+    let swapped = false;
     for (let i = 0; i < bars.length - 1; i++) {
       if (parseInt(bars[i].style.height) <= parseInt(bars[i + 1].style.height)) {
         bars[i].style.backgroundColor = "green";
         updateBarHolder(bars);
-        playNote(300 + parseInt(bars[i].style.height));
-        await sleep(100);
+        playNote(frequency + parseInt(bars[i].style.height));
+        await sleep(delay);
+      } else {
+        swapped = true;
+        break; // Exit the loop if a swap is detected
       }
     }
-
-    bars[bars.length - 1].style.backgroundColor = "green";
-    updateBarHolder(bars);
-    playNote(300 + parseInt(bars[bars.length - 1].style.height));
-  }
+  
+    if (!swapped) {
+      bars.forEach((bar) => {
+        bar.style.backgroundColor = "green";
+      });
+      updateBarHolder(bars);
+      playNote(300 + parseInt(bars[bars.length - 1].style.height));
+    }
+  };
+  
 
   const initAudioContext = () => {
     if (audioCtx == null) {
@@ -57,6 +74,7 @@ function App() {
 
   const random = () => {
     bars = [];
+    setElapsedTime(0);
     const barHolder = document.getElementById("barHolder");
     barHolder.innerHTML = "";
 
@@ -85,8 +103,8 @@ function App() {
         arr[i].style.backgroundColor = "red";
         arr[j].style.backgroundColor = "red";
         updateBarHolder(arr);
-        playNote(300 + parseInt(arr[i].style.height)); // Play note for the height
-        await sleep(200);
+        playNote(frequency + parseInt(arr[i].style.height));
+        await sleep(delay);
         arr[i].style.backgroundColor = "black";
         arr[j].style.backgroundColor = "black";
       }
@@ -95,8 +113,8 @@ function App() {
     arr[i + 1].style.backgroundColor = "red";
     arr[high].style.backgroundColor = "red";
     updateBarHolder(arr);
-    playNote(300 + parseInt(arr[i + 1].style.height)); // Play note for the height
-    await sleep(200);
+    playNote(frequency + parseInt(arr[i + 1].style.height));
+    await sleep(delay);
     arr[i + 1].style.backgroundColor = "black";
     arr[high].style.backgroundColor = "black";
     return i + 1;
@@ -129,16 +147,16 @@ function App() {
         arr[j + 1] = arr[j];
         arr[j + 1].style.backgroundColor = "red";
         updateBarHolder(arr);
-        playNote(300 + parseInt(arr[j + 1].style.height)); // Play note for the height
-        await sleep(100);
+        playNote(frequency + parseInt(arr[j + 1].style.height));
+        await sleep(delay);
         arr[j + 1].style.backgroundColor = "black";
         j = j - 1;
       }
       arr[j + 1] = key;
       arr[j + 1].style.backgroundColor = "red";
       updateBarHolder(arr);
-      playNote(300 + parseInt(arr[j + 1].style.height)); // Play note for the height
-      await sleep(100);
+      playNote(frequency + parseInt(arr[j + 1].style.height));
+      await sleep(delay);
       arr[j + 1].style.backgroundColor = "black";
     }
   };
