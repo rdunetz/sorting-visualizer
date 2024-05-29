@@ -67,3 +67,26 @@ button:hover {
   font-size: 2rem;
   color: red;
 }
+
+.App-header {
+  text-align: center;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.barHolder {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: 20px;
+  height: 300px;
+}
+
+.timer {
+  margin-top: 20px;
+}

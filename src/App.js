@@ -1,15 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 function App() {
-  let bars = [];
+  const [bars, setBars] = useState([]);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [isSorting, setIsSorting] = useState(false);
 
   const delay = 100;
-
   const frequency = 200;
+  let audioCtx = useRef(null);
 
-  let audioCtx = null;
+  useEffect(() => {
+    random();
+  }, []);
 
   const checker = async () => {
     if (bars.length === 0) {
@@ -18,16 +21,14 @@ function App() {
 
     let swapped = false;
     for (let i = 0; i < bars.length - 1; i++) {
-      if (
-        parseInt(bars[i].style.height) <= parseInt(bars[i + 1].style.height)
-      ) {
+      if (parseInt(bars[i].style.height) <= parseInt(bars[i + 1].style.height)) {
         bars[i].style.backgroundColor = "green";
         updateBarHolder(bars);
         playNote(frequency + parseInt(bars[i].style.height));
-        await sleep(100);
+        await sleep(100 / i);
       } else {
         swapped = true;
-        break; // Exit the loop if a swap is detected
+        break;
       }
     }
 
@@ -38,23 +39,25 @@ function App() {
       updateBarHolder(bars);
       playNote(frequency + parseInt(bars[bars.length - 1].style.height));
     }
+
+    return swapped;
   };
 
   const initAudioContext = () => {
-    if (audioCtx == null) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.current == null) {
+      audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
     }
   };
 
   const playNote = (freq) => {
-    if (!audioCtx) initAudioContext();
+    if (!audioCtx.current) initAudioContext();
 
     const dur = 0.1;
-    const osc = audioCtx.createOscillator();
+    const osc = audioCtx.current.createOscillator();
     osc.frequency.value = freq;
     osc.start();
-    osc.stop(audioCtx.currentTime + dur);
-    osc.connect(audioCtx.destination);
+    osc.stop(audioCtx.current.currentTime + dur);
+    osc.connect(audioCtx.current.destination);
   };
 
   function getRandomInt(max) {
@@ -74,7 +77,7 @@ function App() {
   };
 
   const random = () => {
-    bars = [];
+    const newBars = [];
     setElapsedTime(0);
     const barHolder = document.getElementById("barHolder");
     barHolder.innerHTML = "";
@@ -89,8 +92,10 @@ function App() {
       bar.style.backgroundColor = "black";
       bar.style.display = "inline-block";
       bar.style.margin = "2px";
-      bars.push(bar);
+      newBars.push(bar);
     }
+
+    setBars(newBars);
   };
 
   const partition = async (arr, low, high) => {
@@ -132,12 +137,19 @@ function App() {
   };
 
   const handleQS = async () => {
+
+    if (await checker() === false) {
+      return;
+    }
+
+    setIsSorting(true);
     const start = performance.now();
     await quickSort(bars, 0, bars.length - 1);
     const end = performance.now();
     setElapsedTime((end - start) / 1000);
 
     await checker();
+    setIsSorting(false);
   };
 
   const insertionSort = async (arr, n) => {
@@ -146,10 +158,7 @@ function App() {
       key = arr[i];
       j = i - 1;
 
-      while (
-        j >= 0 &&
-        parseInt(arr[j].style.height) > parseInt(key.style.height)
-      ) {
+      while (j >= 0 && parseInt(arr[j].style.height) > parseInt(key.style.height)) {
         arr[j + 1] = arr[j];
         arr[j + 1].style.backgroundColor = "red";
         updateBarHolder(arr);
@@ -168,12 +177,18 @@ function App() {
   };
 
   const handleInsertion = async () => {
+    if (await checker() === false) {
+      return;
+    }
+
+    setIsSorting(true);
     const start = performance.now();
     await insertionSort(bars, bars.length);
     const end = performance.now();
     setElapsedTime((end - start) / 1000);
 
     await checker();
+    setIsSorting(false);
   };
 
   return (
@@ -182,9 +197,9 @@ function App() {
         <h1>Data Sort Visualizer</h1>
         <div id="barHolder" className="barHolder"></div>
         <div className="button-group">
-          <button onClick={random}>Generate Random Array</button>
-          <button onClick={handleQS}>QuickSort</button>
-          <button onClick={handleInsertion}>Insertion Sort</button>
+          <button onClick={random} disabled={isSorting}>Generate Random Array</button>
+          <button onClick={handleQS} disabled={isSorting}>QuickSort</button>
+          <button onClick={handleInsertion} disabled={isSorting}>Insertion Sort</button>
         </div>
         <div className="timer">
           <h1>Time Executed</h1>
