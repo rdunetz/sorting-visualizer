@@ -6,6 +6,7 @@ function App() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isSorting, setIsSorting] = useState(false);
 
+  const NUM_BARS = 64;
   const delay = 100;
   const frequency = 200;
   let audioCtx = useRef(null);
@@ -82,7 +83,7 @@ function App() {
     const barHolder = document.getElementById("barHolder");
     barHolder.innerHTML = "";
 
-    for (let i = 1; i < 41; i++) {
+    for (let i = 1; i < NUM_BARS; i++) {
       const bar = document.createElement("div");
       bar.id = `bar_${i}`;
       bar.classList.add("1");
@@ -195,15 +196,14 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>Data Sort Visualizer</h1>
+        <div className="timer">
+          <h2 className="time">{elapsedTime.toFixed(2)} seconds</h2>
+        </div>
         <div id="barHolder" className="barHolder"></div>
         <div className="button-group">
           <button onClick={random} disabled={isSorting}>Generate Random Array</button>
           <button onClick={handleQS} disabled={isSorting}>QuickSort</button>
           <button onClick={handleInsertion} disabled={isSorting}>Insertion Sort</button>
-        </div>
-        <div className="timer">
-          <h1>Time Executed</h1>
-          <h2 className="time">{elapsedTime.toFixed(2)} seconds</h2>
         </div>
       </header>
     </div>
